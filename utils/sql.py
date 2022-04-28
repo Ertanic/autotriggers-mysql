@@ -32,7 +32,7 @@ def get_attributes(table_name: str, db_name: str, cursor: Type[cursors.Cursor]) 
         map(
             lambda f: {
                 'attr_name': f['Field'],
-                'type': f['Type'],
+                'type': f['Type'] if not (f['Type'] == "int(11)") else "int",
                 'isPrimaryKey': f['Key'] == 'PRI'
             },
             data

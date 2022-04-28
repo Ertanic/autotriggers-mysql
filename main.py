@@ -73,17 +73,16 @@ with connection:
     `LogsTime` time NOT NULL,
     `LogsUser` varchar(255) NOT NULL,
     `LogsMessage` varchar(255) NOT NULL,
-    `Logs_{} {} NOT NULL`
+    `Logs_{}` {} NOT NULL
 );""".format(table['table_name'], table['table_name'], primary_key['attr_name'], primary_key['type']))
             
             #   Генерация таблиц бэкапов
             queries.append("/* Создание таблицы для резервного копирования данных из таблицы {} */".format(table['table_name']))
             backup_attrs_sql = []   # Массив для хранения сформированных атрибутов таблицы
             for attr in table['attrs']:
-                backup_attrs_sql.append("`Backup_{}` {}{}".format(attr['attr_name'], attr['type'], " PRIMARY KEY AUTO_INCREMENT" if attr['isPrimaryKey'] else ""))
+                backup_attrs_sql.append("`Backup_{}` {}".format(attr['attr_name'], attr['type']))
             #   Формирование запроса на создание таблицы
-            queries.append("CREATE TABLE `Backups_{}` (\n    `BackupID_{}` int NOT NULL PRIMARY KEY AUTO_INCREMENT,\n    {}\n);".format(
-                table['table_name'],
+            queries.append("CREATE TABLE `Backups_{0}` (\n    `BackupID_{0}` int NOT NULL PRIMARY KEY AUTO_INCREMENT,\n    {1}\n);".format(
                 table['table_name'],
                 ",\n    ".join(backup_attrs_sql)))
 
@@ -96,7 +95,7 @@ with connection:
 
             for trigger in trigger_types:
                 queries.append(
-"""DELIMITER ;
+"""DELIMITER |
 CREATE TRIGGER `{0}_{1}_tr` {2} {3} ON `{0}`
 FOR EACH ROW
 BEGIN
@@ -104,9 +103,10 @@ BEGIN
     `{5}`.`LogsDate` = CURRENT_DATE,
     `{5}`.`LogsTime` = CURRENT_TIME,
     `{5}`.`LogsUser` = CURRENT_USER,
-    `{5}`.`LogsMessage` = `{6}`
-    `{5}`.`Logs_{4}` = NEW.`{4}`;{7}
+    `{5}`.`LogsMessage` = "{6}",
+    `{5}`.`Logs_{4}` = {8}.`{4}`;{7}
 END;
+DELIMITER ;
 """.format(table['table_name'], 
     trigger['type'].lower(), 
     trigger['time'], 
@@ -115,7 +115,8 @@ END;
     'Logs_{}'.format(table['table_name']), 
     trigger['message_log'],
 """\n    INSER `Backups_{}` SET
-    {};""".format(table['table_name'], ",\n    ".join(trigger_attrs_sql)) if not (trigger['type'] == "INSERT") else "" ))
+    {};""".format(table['table_name'], ",\n    ".join(trigger_attrs_sql)) if not (trigger['type'] == "INSERT") else "",
+    "OLD" if trigger['time'] == "BEFORE" else "NEW"))
 
         print('\n'.join(queries))
 
