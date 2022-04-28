@@ -39,7 +39,7 @@ def get_attributes(table_name: str, db_name: str, cursor: Type[cursors.Cursor]) 
         )
     )
 
-def prepare_tables(db_name: str, table_names: List[str], cursor: Type[cursors.Cursor]) -> Dict[str, List[Dict[str, List[Dict]]]]:
+def prepare_db(db_name: str, table_names: List[str], cursor: Type[cursors.Cursor]) -> Dict[str, List[Dict[str, List[Dict]]]]:
     prepared_tables = {
         'db_name': db_name,
         'tables': []

@@ -10,8 +10,9 @@
             "request": "launch",
             "program": "main.py",
             "args": [
+                "--test_database",
                 "--host=localhost",
-                "-db=mydb",
+                "-db=turagent",
                 "-u=root",
                 "-p="
             ],

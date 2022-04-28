@@ -3,7 +3,7 @@ from pymysql import cursors
 from utils.sql import db_exists
 from utils.string_builder import StringBuilder
 
-def create_test_databases(cursor: Type[cursors.Cursor], dbs: List[Dict]):
+def create_test_databases(cursor: Type[cursors.Cursor]):
     dbs =  [{
             'db_name': 'one_db',
             'tables': [
