@@ -1,3 +1,4 @@
+import os
 from pprint import pprint
 from utils.args import get_args
 from utils import sql
@@ -118,8 +119,14 @@ END;
 
         print('\n'.join(queries))
 
-        # TODO: Реализовать экпорт в файл и автоматический режим
+        # TODO: Реализовать и автоматический режим
         # if args.auto:
         #     ()
         # else:
-        #     ()
+        with open(
+            os.path.join(
+                os.path.abspath(args.file), 
+                'autotriggers_{}.sql'.format(db_name)), 
+            'w',
+            encoding="utf-8") as file:
+            file.write("\n".join(queries))
