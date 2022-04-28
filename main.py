@@ -1,5 +1,5 @@
 import os
-from pprint import pprint
+# from pprint import pprint
 from utils.args import get_args
 from utils import sql
 from utils.string_builder import StringBuilder
@@ -25,7 +25,7 @@ with connection:
 
         #   Нормализация представления базы данных
         tables = sql.prepare_db(db_name, table_names, cursor)['tables']
-        pprint(tables)
+        # pprint(tables)
         queries = []
         trigger_types = [
             {
