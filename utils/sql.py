@@ -1,6 +1,13 @@
-from ast import Tuple
 from typing import Dict, List, Type
 from pymysql import cursors
+
+def db_exists(cursor: Type[cursors.Cursor], db_name: str):
+    cursor.execute("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{}'".format(db_name))
+    return not (cursor.fetchone() is None)
+
+def table_exists(cursor: Type[cursors.Cursor], db_name: str, table_name: str):
+    cursor.execute("SHOW TABLES FROM `{}` LIKE {};".format(db_name, table_name))
+    return not (cursor.fetchone() is None)
 
 def get_tables_list(db_name: str, cursor: Type[cursors.Cursor]) -> List[str]:
     sql = 'SHOW TABLES FROM {}'.format(db_name)
@@ -24,7 +31,7 @@ def get_attributes(table_name: str, db_name: str, cursor: Type[cursors.Cursor]) 
     return list(
         map(
             lambda f: {
-                'field_name': f['Field'],
+                'attr_name': f['Field'],
                 'type': f['Type'],
                 'isPrimaryKey': f['Key'] == 'PRI'
             },

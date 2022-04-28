@@ -25,5 +25,7 @@ def get_args():
         default='./',
         type=str,
         help="Принимает путь, по которому будет сгенерирован .sql-файл с запросами, если параметр --auto_create не указан")
+    args_parser.add_argument('--test_database',
+        action="store_true")
 
     return args_parser.parse_args()
