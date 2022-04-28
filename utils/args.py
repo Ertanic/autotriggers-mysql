@@ -9,11 +9,11 @@ def get_args():
     args_parser.add_argument('-u', '--user',
         type=str,
         default="root",
-        help="Указывает имя пользователя MySQL")
+        help="Указывает имя пользователя MySQL (default: \"root\")")
     args_parser.add_argument('-p', '--password',
         type=str,
         default='',
-        help="Указывает пароль к пользователю MySQL")
+        help="Указывает пароль к пользователю MySQL (default: \"\"")
     args_parser.add_argument('-db', '--database',
         type=str,
         required=True,
@@ -24,8 +24,12 @@ def get_args():
     args_parser.add_argument('-f', '--file',
         default='./',
         type=str,
-        help="Принимает путь, по которому будет сгенерирован .sql-файл с запросами, если параметр --auto_create не указан")
+        help="Принимает путь, по которому будет сгенерирован .sql-файл с запросами, если параметр --auto_create не указан (default: папка с файлом {})".format(__file__))
+    args_parser.add_argument('-d', '--delete_tables',
+        action='store_true',
+        help="Если указан, тогда удаляет уже существующие таблицы и создаёт заново. Пригодится в том случае, если структура таблиц в базе обновилась")
     args_parser.add_argument('--test_database',
-        action="store_true")
+        action="store_true",
+        help="Служебный параметр")
 
     return args_parser.parse_args()
