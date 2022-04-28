@@ -47,6 +47,15 @@ with connection:
         queries.append("USE `{}`;".format(db_name))
         for table in tables:
             queries.append("/* Работа с таблицей {} */".format(table['table_name']))
+            queries.append("/* Удаление таблиц логирования и резервного копирования для таблицы {} */".format(table['table_name']))
+            queries.append("DROP TABLE IF EXISTS `Logs_{}`;".format(table['table_name']))
+            queries.append("DROP TABLE IF EXISTS `Backups_{}`;".format(table['table_name']))
+
+            queries.append("/* Удаление триггеров для таблицы {} */".format(table['table_name']))
+            for trigger in trigger_types:
+                queries.append("DROP TRIGGER IF EXISTS `{}_{}_tr`;".format(table['table_name'], trigger['type'].lower(),))
+            
+
             queries.append("/* Создание таблицы для логирования действий в таблице {} */".format(table['table_name']))
 
             #   Проверяем наличие первичного ключа в таблице
@@ -107,7 +116,7 @@ END;
 """\n    INSER `Backups_{}` SET
     {};""".format(table['table_name'], ",\n    ".join(trigger_attrs_sql)) if not (trigger['type'] == "INSERT") else "" ))
 
-            print('\n'.join(queries))
+        print('\n'.join(queries))
 
         # TODO: Реализовать экпорт в файл и автоматический режим
         # if args.auto:
