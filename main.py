@@ -47,6 +47,7 @@ with connection:
         #   Исполнение сгенерированных запросов
         if not args.without_execute:
             print("5. Исполнение запросов в БД")
-            cursor.executemany(query, None)
+            for q in queries:
+                cursor.execute(q)
 
         print("\n✓ Программа успешно выполнена.")

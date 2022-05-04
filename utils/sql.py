@@ -55,8 +55,7 @@ def generate_queries(tables: List, queries: List):
 
         for trigger in trigger_types:
             queries.append(
-"""DELIMITER |
-CREATE TRIGGER `{0}_{1}_tr` {2} {3} ON `{0}`
+"""CREATE TRIGGER `{0}_{1}_tr` {2} {3} ON `{0}`
 FOR EACH ROW
 BEGIN
     INSERT `{5}` SET
@@ -72,7 +71,7 @@ END;""".format(table['table_name'],
     primary_key['attr_name'], 
     'Logs_{}'.format(table['table_name']), 
     trigger['message_log'],
-"""\n    INSER `Backups_{}` SET
+"""\n    INSERT `Backups_{}` SET
     {};""".format(table['table_name'], ",\n    ".join(trigger_attrs_sql)) if not (trigger['type'] == "INSERT") else "",
     "OLD" if trigger['time'] == "BEFORE" else "NEW"))
 
