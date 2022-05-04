@@ -1,9 +1,7 @@
 import os
 # from pprint import pprint
 from utils.args import get_args
-from utils import sql
-from utils.string_builder import StringBuilder
-from utils.test_db import create_test_databases
+from utils.sql import get_tables_list, prepare_db, generate_queries
 import pymysql
 
 args = get_args()
@@ -15,119 +13,40 @@ connection = pymysql.connect(
     password=args.password,
     cursorclass=pymysql.cursors.DictCursor);
 
-#   TODO: Вынести в отдельный файл(ы)
 with connection:
     with connection.cursor() as cursor:
-        if args.test_database:
-            create_test_databases(cursor)
+        print("1. Получение списка таблиц")
+        #   Получение списка таблиц
+        table_names = get_tables_list(db_name, cursor)
 
-        table_names = sql.get_tables_list(db_name, cursor)
-
+        print("2. Подготовка таблиц")
         #   Нормализация представления базы данных
-        tables = sql.prepare_db(db_name, table_names, cursor)['tables']
-        # pprint(tables)
+        tables = prepare_db(db_name, table_names, cursor)['tables']
+        #   Массив для сохранения подзапросов
         queries = []
-        trigger_types = [
-            {
-                'type': 'INSERT',
-                'message_log': "Добавлена запись",
-                'time': 'AFTER'
-            },
-            {
-                'type': 'UPDATE',
-                'message_log': "Запись обновлена",
-                'time': 'BEFORE'
-            },
-            {
-                'type': 'DELETE',
-                'message_log': "Запись удалена",
-                'time': 'BEFORE'
-            }
-        ]
 
+        print("3. Генерация SQL-запроса")
+        #   Объявление об использовании базы данных
         queries.append("USE `{}`;".format(db_name))
-        for table in tables:
-            queries.append("/* Работа с таблицей {} */".format(table['table_name']))
-            queries.append("/* Удаление таблиц логирования и резервного копирования для таблицы {} */".format(table['table_name']))
-            queries.append("DROP TABLE IF EXISTS `Logs_{}`;".format(table['table_name']))
-            queries.append("DROP TABLE IF EXISTS `Backups_{}`;".format(table['table_name']))
+        #   Генерация SQL-запросов на создание таблиц и триггеров
+        generate_queries(tables, queries)
 
-            queries.append("/* Удаление триггеров для таблицы {} */".format(table['table_name']))
-            for trigger in trigger_types:
-                queries.append("DROP TRIGGER IF EXISTS `{}_{}_tr`;".format(table['table_name'], trigger['type'].lower(),))
-            
+        #   Путь до файла, в который будет сохранён сгенерированный SQL-запрос
+        file_path = os.path.join(os.path.abspath(args.file), 'autotriggers_{}.sql'.format(db_name))
+        #   Сборка запроса
+        query = "\n".join(queries)
 
-            queries.append("/* Создание таблицы для логирования действий в таблице {} */".format(table['table_name']))
-
-            #   Проверяем наличие первичного ключа в таблице
-            try:
-                primary_key = list(filter(lambda attr: attr['isPrimaryKey'], table['attrs']))[0]
-            except Exception:
-                raise Exception("Не найден первичный ключ в таблице {}".format(table['table_name']))
-
-            #   Генерация таблицы логов
-            queries.append(
-"""CREATE TABLE `Logs_{}` (
-    `LogsID_{}` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    `LogsDate` date NOT NULL,
-    `LogsTime` time NOT NULL,
-    `LogsUser` varchar(255) NOT NULL,
-    `LogsMessage` varchar(255) NOT NULL,
-    `Logs_{}` {} NOT NULL
-);""".format(table['table_name'], table['table_name'], primary_key['attr_name'], primary_key['type']))
-            
-            #   Генерация таблиц бэкапов
-            queries.append("/* Создание таблицы для резервного копирования данных из таблицы {} */".format(table['table_name']))
-            backup_attrs_sql = []   # Массив для хранения сформированных атрибутов таблицы
-            for attr in table['attrs']:
-                backup_attrs_sql.append("`Backup_{}` {}".format(attr['attr_name'], attr['type']))
-            #   Формирование запроса на создание таблицы
-            queries.append("CREATE TABLE `Backups_{0}` (\n    `BackupID_{0}` int NOT NULL PRIMARY KEY AUTO_INCREMENT,\n    {1}\n);".format(
-                table['table_name'],
-                ",\n    ".join(backup_attrs_sql)))
-
-            #   Создание триггеров для логирования
-            queries.append("/* Создание триггеров для таблицы {} */".format(table['table_name']))
-            #   Получение форматированных атрибутов для триггера
-            trigger_attrs_sql = []
-            for attr in table['attrs']:
-                trigger_attrs_sql.append("`Backups_{0}`.`Backup_{1}` = OLD.`{1}`".format(table['table_name'], attr['attr_name']))
-
-            for trigger in trigger_types:
-                queries.append(
-"""DELIMITER |
-CREATE TRIGGER `{0}_{1}_tr` {2} {3} ON `{0}`
-FOR EACH ROW
-BEGIN
-    INSERT `{5}` SET
-    `{5}`.`LogsDate` = CURRENT_DATE,
-    `{5}`.`LogsTime` = CURRENT_TIME,
-    `{5}`.`LogsUser` = CURRENT_USER,
-    `{5}`.`LogsMessage` = "{6}",
-    `{5}`.`Logs_{4}` = {8}.`{4}`;{7}
-END;
-DELIMITER ;
-""".format(table['table_name'], 
-    trigger['type'].lower(), 
-    trigger['time'], 
-    trigger['type'], 
-    primary_key['attr_name'], 
-    'Logs_{}'.format(table['table_name']), 
-    trigger['message_log'],
-"""\n    INSER `Backups_{}` SET
-    {};""".format(table['table_name'], ",\n    ".join(trigger_attrs_sql)) if not (trigger['type'] == "INSERT") else "",
-    "OLD" if trigger['time'] == "BEFORE" else "NEW"))
-
-        print('\n'.join(queries))
-
-        # TODO: Реализовать и автоматический режим
-        # if args.auto:
-        #     ()
-        # else:
+        print("4. Сохранение SQL-запроса в файл по пути: {}", file_path)
+        #   Сохранение SQL-запроса в файл
         with open(
-            os.path.join(
-                os.path.abspath(args.file), 
-                'autotriggers_{}.sql'.format(db_name)), 
+            file_path, 
             'w',
             encoding="utf-8") as file:
-            file.write("\n".join(queries))
+            file.write(query)
+
+        #   Исполнение сгенерированных запросов
+        if not args.without_execute:
+            print("5. Исполнение запросов в БД")
+            cursor.executemany(query, None)
+
+        print("\n✓ Программа успешно выполнена.")

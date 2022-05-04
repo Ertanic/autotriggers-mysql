@@ -10,11 +10,7 @@
             "request": "launch",
             "program": "main.py",
             "args": [
-                "--test_database",
-                "--host=localhost",
-                "-db=turagent",
-                "-u=root",
-                "-p="
+                "-db=turagent"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

@@ -4,3 +4,10 @@ __pycache__/
 utils/__pycache__/
 
 *.sql
+*.spec
+
+dist/
+build/
+
+dist/*
+build/*
