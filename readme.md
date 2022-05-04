@@ -6,7 +6,7 @@
 
 ### Загрузка
 
-Утилиту можно загрузить с представленной [страницы](https://github.com/Ertanic/autotriggers-mysql/releases) или [напрямую](https://github.com/Ertanic/autotriggers-mysql/releases/download/v2.0/AutoTriggers.exe).
+Утилиту можно загрузить с представленной [страницы](https://github.com/Ertanic/autotriggers-mysql/releases) или [напрямую](https://github.com/Ertanic/autotriggers-mysql/releases/download/v2.1/AutoTriggers.exe).
 
 ___
 
