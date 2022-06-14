@@ -6,7 +6,7 @@
 
 ### Загрузка
 
-Утилиту можно загрузить с представленной [страницы](https://github.com/Ertanic/autotriggers-mysql/releases) или [напрямую](https://github.com/Ertanic/autotriggers-mysql/releases/download/v2.1/AutoTriggers.exe).
+Утилиту можно загрузить с представленной [страницы](https://github.com/Ertanic/autotriggers-mysql/releases) или [напрямую](https://github.com/Ertanic/autotriggers-mysql/releases/download/v2.2/AutoTriggers.exe).
 
 ___
 
@@ -35,5 +35,5 @@ ___
 ##  Планы:
 - [x] Реализовать автоматическое выполнение SQL;
 - [x] Исправить проблему с бесконечным генерирования таблиц;
-- [ ] Добавить функционал генерирования представлений для таблиц с логами;
+- [x] Добавить функционал генерирования представлений для таблиц с логами;
 - [x] Скомпилировать в бинарный файл?

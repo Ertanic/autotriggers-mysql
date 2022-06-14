@@ -15,7 +15,9 @@ def generate_queries(tables: List, queries: List):
         queries.append("/* Удаление триггеров для таблицы {} */".format(table['table_name']))
         for trigger in trigger_types:
             queries.append("DROP TRIGGER IF EXISTS `{}_{}_tr`;".format(table['table_name'], trigger['type'].lower(),))
-        
+
+        queries.append("/* Удаление представлений */")
+        queries.append("DROP VIEW IF EXISTS `Logs_{}_view`".format(table['table_name']))
 
         queries.append("/* Создание таблицы для логирования действий в таблице {} */".format(table['table_name']))
 
@@ -75,7 +77,38 @@ END;""".format(table['table_name'],
     {};""".format(table['table_name'], ",\n    ".join(trigger_attrs_sql)) if not (trigger['type'] == "INSERT") else "",
     "OLD" if trigger['time'] == "BEFORE" else "NEW"))
 
+        queries.append("/* Создание представлений для таблицы {} */".format(table['table_name']))
+        view_attrs = []
+        [view_attrs.append("`{0}`.`{1}`".format(table['table_name'], attr['attr_name'])) for attr in list(filter(lambda attr: attr['isPrimaryKey'], table['attrs']))]
+
+        queries.append(
+"""CREATE VIEW `Logs_{1}_view` AS
+SELECT
+    {0},
+    `Logs_{1}`.`LogsDate`,
+    `Logs_{1}`.`LogsTime`,
+    `Logs_{1}`.`LogsUser`
+FROM `{1}`
+RIGHT JOIN `Logs_{1}` ON `{1}`.`{2}` = `Logs_{1}`.`Logs_{2}`
+""".format(",\n".join(view_attrs),
+    table['table_name'],
+    first_true(table['attrs'], lambda attr: attr['isPrimaryKey'])['attr_name']))
+
     return queries
+
+
+def first_true(iterable, pred=None, default=None):
+    """Returns the first true value in the iterable.
+
+    If no true value is found, returns *default*
+
+    If *pred* is not None, returns the first item
+    for which pred(item) is true.
+
+    """
+    # first_true([a,b,c], x) --> a or b or c or x
+    # first_true([a,b], x, f) --> a if f(a) else b if f(b) else x
+    return next(filter(pred, iterable), default)
 
 def get_tables_list(db_name: str, cursor: Type[cursors.Cursor]) -> List[str]:
     sql = 'SHOW TABLES FROM {}'.format(db_name)
